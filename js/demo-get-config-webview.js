@@ -32,7 +32,11 @@ function fetchConfig(request) {
             }
         })
         .then(({version, value}) => {
-            console.log(`Config with version ${version} has been retrieved from server`);
+            if (version === null || value === null) {
+                console.log('Local config is up to date, no need to update from server');
+                return;
+            }
+            console.log(`Config with new version ${version} has been retrieved from server`);
             localStorage.setItem('config', JSON.stringify({version, value}));
         })
         .catch(error => {
