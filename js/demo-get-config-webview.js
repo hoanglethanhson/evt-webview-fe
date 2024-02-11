@@ -1,6 +1,27 @@
-//construct a fetch request object to localhost:8080/demo with path variable
 
-//call rest api with fetch and request object
+document.getElementById("getDataForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    let config = retrieveLocalConfig();
+    if (config) {
+        console.log(`Config with version ${config.version} has been retrieved from local storage`);
+        let version = config.version;
+        let request = generateRequestWithVersion(version);
+        fetchConfig(request);
+    } else {
+        fetchConfig(getLatestVersionRequest);
+    }
+});
+
+function retrieveLocalConfig() {
+    let config = localStorage.getItem('config');
+    if (config) {
+        config = JSON.parse(config);
+        return config;
+    } else {
+        console.log('No config data found in local storage, getting latest config from server');
+        return null;
+    }
+}
 function fetchConfig(request) {
     fetch(request)
         .then(response => {
@@ -10,18 +31,16 @@ function fetchConfig(request) {
                 throw new Error('Something went wrong on api server!');
             }
         })
-        .then(({id, value}) => {
-            console.debug(`Config with id ${id} has value ${value}`);
-            localStorage.setItem('config#'+ id, JSON.stringify({id, value}));
+        .then(({version, value}) => {
+            console.log(`Config with version ${version} has been retrieved from server`);
+            localStorage.setItem('config', JSON.stringify({version, value}));
         })
         .catch(error => {
             console.error(error);
         });
 }
 
-
-const version = 'abc';
-const request = new Request(`http://localhost:8080/config/${version}`, {
+const getLatestVersionRequest = new Request(`http://localhost:8080/config`, {
     method: 'GET',
     mode: 'cors',
     redirect: 'follow',
@@ -30,5 +49,17 @@ const request = new Request(`http://localhost:8080/config/${version}`, {
     })
 });
 
-fetchConfig(request);
+function generateRequestWithVersion(version) {
+    return new Request(`http://localhost:8080/config/${version}`, {
+        method: 'GET',
+        mode: 'cors',
+        redirect: 'follow',
+        headers: new Headers({
+            'Content-Type': 'text/plain'
+        })
+    });
+}
+
+
+
 
